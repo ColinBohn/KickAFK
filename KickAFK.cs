@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,7 @@ namespace KickAFK
     [ApiVersion(1, 14)]
     public class KickAFK : TerrariaPlugin
     {
+        private Config Config = new Config();
         public static AFKPlayer[] Players = new AFKPlayer[256];
         private DateTime LastCheck = DateTime.UtcNow;
         public override string Name
@@ -38,7 +40,7 @@ namespace KickAFK
         {
             get
             {
-                return new Version("1.0");
+                return new Version("1.1");
             }
         }
         public KickAFK(Main game)
@@ -51,6 +53,7 @@ namespace KickAFK
             ServerApi.Hooks.NetGreetPlayer.Register(this, OnGreet);
             ServerApi.Hooks.GameUpdate.Register(this, OnUpdate);
             ServerApi.Hooks.ServerLeave.Register(this, OnLeave);
+            ServerApi.Hooks.GameInitialize.Register(this, OnInitialize);
         }
         protected override void Dispose(bool disposing)
         {
@@ -59,8 +62,18 @@ namespace KickAFK
                 ServerApi.Hooks.NetGreetPlayer.Deregister(this, OnGreet);
                 ServerApi.Hooks.GameUpdate.Deregister(this, OnUpdate);
                 ServerApi.Hooks.ServerLeave.Deregister(this, OnLeave);
+                ServerApi.Hooks.GameInitialize.Deregister(this, OnInitialize);
             }
             base.Dispose(disposing);
+        }
+        public void OnInitialize(EventArgs args)
+        {
+            string path = Path.Combine(TShock.SavePath, "KickAFK.json");
+            if (File.Exists(path))
+            {
+                Config = Config.Read(path);
+            }
+            Config.Write(path);
         }
         public void OnGreet(GreetPlayerEventArgs args)
         {
@@ -90,13 +103,13 @@ namespace KickAFK
                             }
                             p.LastX = p.TSPlayer.TileX;
                             p.LastY = p.TSPlayer.TileY;
-                            if (p.IdleTime > 600 && !p.TSPlayer.Group.HasPermission("tshock.admin.nokick"))
+                            if (p.IdleTime > Config.KickTime && !p.TSPlayer.Group.HasPermission("tshock.admin.nokick"))
                             {
-                                TShock.Utils.Kick(p.TSPlayer, "Was inactive for too long", false, false, "Server", true);
+                                TShock.Utils.Kick(p.TSPlayer, Config.KickMsg, false, false, "Server", true);
                             }
-                            else if (p.IdleTime > 540 && !p.TSPlayer.Group.HasPermission("tshock.admin.nokick"))
+                            else if (p.IdleTime > Config.WarnTime && !p.TSPlayer.Group.HasPermission("tshock.admin.nokick"))
                             {
-                                p.TSPlayer.SendErrorMessage("You will be kicked for being inactive in " + (600 - p.IdleTime) + " seconds.");
+                                p.TSPlayer.SendErrorMessage("You will be kicked for being inactive in " + (Config.KickTime - p.IdleTime) + " seconds.");
                             }
 
                         }
