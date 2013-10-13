@@ -54,6 +54,7 @@ namespace KickAFK
             ServerApi.Hooks.GameUpdate.Register(this, OnUpdate);
             ServerApi.Hooks.ServerLeave.Register(this, OnLeave);
             ServerApi.Hooks.GameInitialize.Register(this, OnInitialize);
+            ServerApi.Hooks.ServerChat.Register(this, OnChat);
         }
         protected override void Dispose(bool disposing)
         {
@@ -63,6 +64,7 @@ namespace KickAFK
                 ServerApi.Hooks.GameUpdate.Deregister(this, OnUpdate);
                 ServerApi.Hooks.ServerLeave.Deregister(this, OnLeave);
                 ServerApi.Hooks.GameInitialize.Deregister(this, OnInitialize);
+                ServerApi.Hooks.ServerChat.Deregister(this, OnChat);
             }
             base.Dispose(disposing);
         }
@@ -114,6 +116,12 @@ namespace KickAFK
 
                         }
             }
+        }
+        public void OnChat(ServerChatEventArgs args)
+        {
+            var player = Players[args.Who];
+            if (player.IdleTime > 0)
+                player.IdleTime = 0;
         }
         public class AFKPlayer
         {
