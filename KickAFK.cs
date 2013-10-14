@@ -40,7 +40,7 @@ namespace KickAFK
         {
             get
             {
-                return new Version("1.1");
+                return new Version("1.2");
             }
         }
         public KickAFK(Main game)
